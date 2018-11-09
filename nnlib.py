@@ -1,32 +1,8 @@
 import numpy as np
 from random import random
-
-
-class Layer(object):
-    def __init__(self, num_last, num_this, activation):
-        self.weight = np.zeros((num_last, num_this))
-        return
-
-    def update(self, value):
-        return
-
-
-class NeNe(object):
-    def __init__(self):
-        return
-
-    def add(self, num, activation='linear', init_seed='norm'):
-        return
-
-    def summary(self):
-        return
-
-    def fit(self, x_train, y_train, x_valid, y_valid, lr=0.001, epoch=1):
-        return
-
-    def predict(self, x_test, y_test=None):
-        return
-
+import NeNe
+from NeNe.Activation import *
+from NeNe.Layer import *
 
 def load_data(path):
     return x, y
@@ -42,7 +18,7 @@ def data_shuffle(x, y):
 
 def main():
     # model building
-    model = NeNe()
+    model = NeNe.NeNe()
     model.add(num=2, activation='linear', init_seed='n_norm')
     model.add(num=10, activation='sigmoid', init_seed='n_norm')
     model.add(num=10, activation='sigmoid', init_seed='n_norm')
