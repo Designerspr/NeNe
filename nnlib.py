@@ -1,7 +1,7 @@
 import numpy as np
 from random import random
 import NeNe
-from NeNe.Activation import *
+import NeNe.Activation as activation
 from NeNe.Layer import *
 
 def load_data(path):
@@ -19,10 +19,10 @@ def data_shuffle(x, y):
 def main():
     # model building
     model = NeNe.NeNe()
-    model.add(num=2, activation='linear', init_seed='n_norm')
-    model.add(num=10, activation='sigmoid', init_seed='n_norm')
-    model.add(num=10, activation='sigmoid', init_seed='n_norm')
-    model.add(num=2, activation='softmax', init_seed='n_norm')
+    model.add(Layer(num=2, activation=activation.Linear(), init_seed='norm'))
+    model.add(Layer(num=10, activation=activation.Sigmond(), init_seed='norm'))
+    model.add(Layer(num=10, activation=activation.Sigmond(), init_seed='norm'))
+    model.add(Layer(num=2, activation=activation.Sigmond(), init_seed='norm'))
     model.summary()
     # data preprocessing
     x, y = load_data('PATH')

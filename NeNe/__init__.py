@@ -1,8 +1,8 @@
 '''Main class of NeNe.
 '''
 
-from Activation import *
-from Layer import *
+from .Activation import *
+from .Layer import *
 import numpy as np
 
 
