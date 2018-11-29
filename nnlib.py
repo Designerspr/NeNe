@@ -3,7 +3,7 @@ from random import random
 import NeNe
 import NeNe.Activation as activation
 from NeNe.Layer import *
-
+'''
 def load_data(path):
     return x, y
 
@@ -14,16 +14,17 @@ def data_split(x, y, split_rate=0.1):
 
 def data_shuffle(x, y):
     return x, y
-
+'''
 
 def main():
     # model building
     model = NeNe.NeNe()
-    model.add(Layer(num=2, activation=activation.Linear(), init_seed='norm'))
+    model.add(InputLayer(num=2))
     model.add(Layer(num=10, activation=activation.Sigmond(), init_seed='norm'))
     model.add(Layer(num=10, activation=activation.Sigmond(), init_seed='norm'))
     model.add(Layer(num=2, activation=activation.Sigmond(), init_seed='norm'))
     model.summary()
+    '''
     # data preprocessing
     x, y = load_data('PATH')
     x, y = data_shuffle(x, y)
@@ -33,3 +34,6 @@ def main():
 
     model.fit(x_train, y_train, x_valid, y_valid, lr=0.001, epoch=100)
     model.predict(x_test, y_test)
+    '''
+
+main()

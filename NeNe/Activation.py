@@ -5,7 +5,7 @@ Libary providing activation.
 import numpy as np
 
 
-class Activation(object):
+class Base_Activation(object):
     '''
     The basic class of Activation.  
         If you want to create your own activate function ,the new class should inhertance from this. 
@@ -43,7 +43,7 @@ class Activation(object):
         return 1
 
 
-class Linear(Activation):
+class Linear(Base_Activation):
     '''Pre-defined activation: Linear
     '''
 
@@ -61,7 +61,7 @@ class Linear(Activation):
         return 1
 
 
-class ReLu(Activation):
+class ReLu(Base_Activation):
     # Pre-defined activation: ReLu
     def __init__(self):
         return
@@ -83,7 +83,7 @@ class ReLu(Activation):
             return 0
 
 
-class Sigmond(Activation):
+class Sigmond(Base_Activation):
     # Pre-defined activation: Sigmond
     def __init__(self):
         return
@@ -99,7 +99,7 @@ class Sigmond(Activation):
         return y(1 - y)
 
 
-class Tanh(Activation):
+class Tanh(Base_Activation):
     # Pre-defined activation: Tanh
     def __init__(self):
         return
@@ -115,7 +115,7 @@ class Tanh(Activation):
         return 1 - y**2
 
 
-class SoftMax(Activation):
+class SoftMax(Base_Activation):
     def __init__(self):
         return
 

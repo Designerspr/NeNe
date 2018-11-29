@@ -4,7 +4,7 @@ Libary about layers.
 
 import numpy as np
 import random
-import Activation
+from .Activation import *
 
 
 class Layer(object):
@@ -21,9 +21,9 @@ class Layer(object):
     def __init__(self, num, activation=None, init_seed='norm'):
         # activation
         if not activation:
-            self.activation = Activation.Linear()
+            self.activation = Linear()
         else:
-            assert isinstance(activation, Activation.Activation)
+            assert isinstance(activation, Base_Activation)
             self.activation = activation
         # bias
         assert init_seed in ('zero', 'norm')
@@ -40,7 +40,7 @@ class Layer(object):
         return self.num
 
     @property
-    def activation(self):
+    def acti(self):
         return self.activation.name
 
     def forwardPropagation(self, value_input):
@@ -50,12 +50,16 @@ class Layer(object):
         value_output = self.activation.forward(value_output)
         return value_output
 
-    def backwardPropagation(self, value_output,lr):
+    def backwardPropagation(self, value_output, err_output, lr):
         '''backward propagation in this layer, passing values to the last layer.
         '''
-        # training bias only
-        # pass the value to train the weight and the 
-        return
+        # activation function
+        delta_bias = self.activation.get_derivative(value_output) * err_output
+        # update bias
+        self.bias = self.bias - delta_bias * lr
+        # pass the value to train the weight and the
+        return delta_bias
+
 
 class InputLayer(Layer):
     '''the input layer class of NeNe. To be the input layer,there is no bias or activation.
@@ -68,9 +72,10 @@ class InputLayer(Layer):
         activation {NeNe.Activation.Activation} -- the activation used in this layer. Default to be linear
         init_seed {str} -- the way to initialize the bias: set-zero('zero') or in gaussian('norm'). (default: {'norm'})
     '''
+
     def __init__(self, num):
         # no activation
-        self.activation = Activation.linear()
+        self.activation = Linear()
         # no bias
         assert isinstance(num, int)
         self.num = num
