@@ -35,16 +35,34 @@ class NeNe(object):
         self.output_num = add_layer.neural_num
 
     def summary(self):
-        print('-----NeNe neural network model summary---')
-        print('-----------------------------------------')
-        print('No.             Num             Param_Num       Activation')
-        print('Layer0       ',self.input_num,'      ',self.input_num)
-        sumParam=self.input_num
-        for i in range(1,len(self.layer_sequence)):
-            param=(self.layer_sequence[i-1].neural_num+1)*self.layer_sequence[i].neural_num
-            sumParam +=param
-            print('Layer',i,':      ',self.layer_sequence[i].neural_num,'      ',param,'        ',self.layer_sequence[i].acti)
-        print('Summary      ',self.net_depth,'      ',sumParam)
+        '''Show some basic information and network structure of the NeNe.
+        '''
+
+        print(
+            '---------------NeNe neural network model summary------------------'
+        )
+        print('Basic Information:')
+        print('Depth:%d\nInput shape:%d\nOutput shape:%d' %
+              (self.net_depth, self.input_num, self.output_num))
+        print('Network structure:')
+        print('%+15s%+15s%+15s%+15s' % ('Name', 'Neural_Num', 'Param_Num',
+                                        'Activation'))
+        print(
+            '------------------------------------------------------------------'
+        )
+        print('%+15s%+15s%+15s%+15s\n' % ('Layer0(Input)', self.input_num, 0,
+                                          self.layer_sequence[0].acti))
+        sumParam, sumNeural = 0, 0
+        for i in range(1, len(self.layer_sequence)):
+            param = (self.layer_sequence[i - 1].neural_num + 1
+                     ) * self.layer_sequence[i].neural_num
+            sumParam += param
+            sumNeural += self.layer_sequence[i].neural_num
+            print('%+15s%+15s%+15s%+15s\n' %
+                  ('Layer' + str(i), self.layer_sequence[i].neural_num, param,
+                   self.layer_sequence[i].acti))
+        print('%+15s%+15s%+15s%+15s' % ('Summary', sumNeural, sumParam,
+                                        '------'))
         return
 
     def forwardCalculation(self, x):
@@ -68,23 +86,41 @@ class NeNe(object):
 
         return output, networkValue
 
-    def backwardUpdate(self,y,networkError,lr):
-        d_thislayer=0
+    def backwardUpdate(self, y, networkError, lr):
+        #assume that networkError has be calculated.
+        d_thislayer = networkError
+        for i in reversed(range(1, len(self.layer_sequence))):
+            i_1 = i - 1
+            # update bias
+            d_thislayer = self.layer_sequence[i].backwardPropagation(
+                y[i], d_thislayer, lr=lr)
+            # update weight (backup weight first)
+            d_nextlayer = d_thislayer * np.transpose(self.layer_sequence[i_1])
+            self.layer_sequence[i_1] = self.layer_sequence - lr * np.transpose(
+                self.layer_sequence[i_1]) * d_thislayer
+            d_thislayer = d_nextlayer
         return
+    
+    def inputVaildCheck(self,input_data):
+        x_,y_=input_data
+        x_,y_=np.array(x_),np.array(y_)
+        (inshape_x,inshape_y),(outshape_x,outshape_y)=x_.shape,y_.shape
+        assert inshape_x==outshape_x
+        assert inshape_y==self.input_num
+        assert outshape_y==self.output_num
+        return x_,y_
 
-    def fit(self, x_train, y_train, x_valid, y_valid, lr=0.001, epoch=1):
-        '''main function,for NeNe to use train data to create 
-        
-        Arguments:
-            x_train {[type]} -- [description]
-            y_train {[type]} -- [description]
-            x_valid {[type]} -- [description]
-            y_valid {[type]} -- [description]
-        
-        Keyword Arguments:
-            lr {float} -- [description] (default: {0.001})
-            epoch {int} -- [description] (default: {1})
-        '''
+    def fit(self, train_data, valid_data=None, epoch=1, lr=0.001, batch_size=1):
+        # validation check
+        assert isinstance(train_data,(list,tuple,np.array))
+        if not valid_data is None:
+            assert isinstance(valid_data,(list,tuple,np.array))
+        assert isinstance(epoch,int)
+        assert isinstance(lr,float)
+        assert isinstance(batch_size,int)
+        # data
+        x_train,y_train=self.inputVaildCheck(train_data)
+        if valid_data:
 
         return
 
