@@ -76,4 +76,4 @@ class MSE(object):
         return MSE
     @classmethod
     def get_loss_deriv(cls,y_output,y_target):
-        return -(y_output-y_target)
+        return (y_output-y_target)

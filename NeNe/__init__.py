@@ -4,6 +4,8 @@
 from .Activation import *
 from .Layer import *
 from .Loss import *
+from .LRD import *
+
 import numpy as np
 from progressbar import ProgressBar, Timer, Bar, Percentage
 
@@ -124,7 +126,7 @@ class NeNe(object):
             train_data,
             valid_data=None,
             epoch=1,
-            lr=0.001,
+            lrf=LRC(lr=0.01),
             batch_size=1,
             loss=None,
             accu_echo=False):
@@ -133,7 +135,7 @@ class NeNe(object):
         if not valid_data is None:
             assert isinstance(valid_data, (list, tuple, np.array))
         assert isinstance(epoch, int)
-        assert isinstance(lr, float)
+        assert isinstance(lrf, LRC)
         assert isinstance(batch_size, int)
         if not loss is None:
             assert isinstance(loss, (CEL, MSE))
@@ -166,11 +168,11 @@ class NeNe(object):
                 Timer(),
                 ' loss=%.2f' % err
             ]
-        #pbar = ProgressBar(widgets=widgets, maxval=batch_num)
+        pbar = ProgressBar(widgets=widgets, maxval=batch_num)
 
         for epoch_now in range(1, epoch + 1):
             print('Epoch %d/%d:' % (epoch_now, epoch))
-            #pbar.start()
+            pbar.start()
             # train every batch
             for batch_id in range(batch_num):
                 x_input, y_target = generator.__next__()
@@ -184,11 +186,12 @@ class NeNe(object):
                         y_output, y_target, return_accu=True)
                 else:
                     err = loss.get_loss(y_output, y_target, return_accu=False)
+                lr=lrf.update(epoch_now,err)
                 # update network
                 y_error = loss.get_loss_deriv(y_output, y_target)
                 self.backwardUpdate(network, y_error, lr=lr)
-                #pbar.update(value=batch_id+1)
-            #pbar.finish()
+                pbar.update(value=batch_id+1)
+            pbar.finish()
             # calculate accu,loss on the validation data if needed
             if not valid_data is None:
                 y_predict = self.predict(x_valid)
