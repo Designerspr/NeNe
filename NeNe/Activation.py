@@ -11,7 +11,7 @@ class Base_Activation(object):
         If you want to create your own activate function ,the new class should inhertance from this. 
         Besides,you should rewrite get_output function and get_derivative function, which defines how the activation works.
     Activation equals to linear activation defaultly.
-    Attention: Activation class works for 1-d network only.
+    Attention: Activation class works for n*1-d network input data only.
     '''
 
     def __init__(self):
@@ -22,17 +22,17 @@ class Base_Activation(object):
     def name(self):
         return 'linear'
 
-    def forward(self, x_1d):
-        y_1d = np.zeros(x_1d.shape)
-        for index in range(len(x_1d)):
-            y_1d[index] = self.get_output(x_1d[index])
-        return y_1d
+    def forward(self, x):
+        y = np.zeros(x.shape)
+        for id_num in range(len(x)):
+            y[id_num] = self.get_output(x[id_num])
+        return y
 
-    def derivative(self, y_1d):
-        x_1d = np.zeros(y_1d.shape)
-        for index in range(len(y_1d)):
-            x_1d[index] = self.get_derivative(y_1d[index])
-        return x_1d
+    def derivative(self, y):
+        x = np.zeros(y.shape)
+        for id_num in range(len(y)):
+            x[id_num] = self.get_output(y[id_num])
+        return x
 
     def get_output(self, x):
         # Need to be rewrite
@@ -40,7 +40,8 @@ class Base_Activation(object):
 
     def get_derivative(self, y):
         # Need to be rewrite
-        return 1
+        deri=np.ones(y.shape)
+        return deri
 
 
 class Linear(Base_Activation):
@@ -55,14 +56,20 @@ class Linear(Base_Activation):
         return 'linear'
 
     def get_output(self, x):
+        # Need to be rewrite
         return x
 
     def get_derivative(self, y):
-        return 1
+        # Need to be rewrite
+        deri=np.ones(y.shape)
+        return deri
 
 
 class ReLu(Base_Activation):
-    # Pre-defined activation: ReLu
+    '''Pre-defined activation: ReLu  
+    ReLu is an activation perform like this:  
+    f(x) = 0 (when x<=0); x (x>0)
+    ''' 
     def __init__(self):
         return
 
@@ -71,20 +78,16 @@ class ReLu(Base_Activation):
         return 'relu'
 
     def get_output(self, x):
-        if x > 0:
-            return x
-        else:
-            return 0
+        symbol=np.array(x>0,dtype=np.int)
+        return symbol*x
 
     def get_derivative(self, y):
-        if y > 0:
-            return 1
-        else:
-            return 0
+        symbol=np.array(y>0,dtype=np.int)
+        return symbol
 
 
 class Sigmond(Base_Activation):
-    # Pre-defined activation: Sigmond
+    '''Pre-defined activation: Sigmond'''
     def __init__(self):
         return
 
@@ -96,11 +99,11 @@ class Sigmond(Base_Activation):
         return 1 / (1 + np.exp(x))
 
     def get_derivative(self, y):
-        return y(1 - y)
+        return y*(1 - y)
 
 
 class Tanh(Base_Activation):
-    # Pre-defined activation: Tanh
+    '''Pre-defined activation: Tanh'''
     def __init__(self):
         return
 
@@ -116,6 +119,7 @@ class Tanh(Base_Activation):
 
 
 class SoftMax(Base_Activation):
+    '''Pre-defined activation: Softmax'''
     def __init__(self):
         return
 
@@ -124,7 +128,9 @@ class SoftMax(Base_Activation):
         return 'SoftMax'
 
     def get_output(self, x):
-        return
+        x=x-np.max(x)
+        x_softmax=np.exp(x)/np.sum(np.exp(x))
+        return x_softmax
 
     def get_derivative(self, y):
-        return
+        return y*(1-y)

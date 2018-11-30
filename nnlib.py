@@ -2,6 +2,7 @@ import numpy as np
 from random import random
 import NeNe
 import NeNe.Activation as activation
+from NeNe.Loss import MSE
 from NeNe.Layer import *
 '''
 def load_data(path):
@@ -16,14 +17,24 @@ def data_shuffle(x, y):
     return x, y
 '''
 
+
 def main():
     # model building
     model = NeNe.NeNe()
     model.add(InputLayer(num=2))
-    model.add(Layer(num=10, activation=activation.Sigmond(), init_seed='norm'))
-    model.add(Layer(num=10, activation=activation.Sigmond(), init_seed='norm'))
+    model.add(Layer(num=20, activation=activation.Sigmond(), init_seed='norm'))
     model.add(Layer(num=2, activation=activation.Sigmond(), init_seed='norm'))
     model.summary()
+    input_data = [[0.05, 0.1], [0.4, 0.35]]
+    output_data = [[0.01,0.99],[0.99,0.1]]
+    model.fit(
+        train_data=(input_data,output_data),
+        valid_data=(input_data,output_data),
+        epoch=20,
+        lr=0.01,
+        batch_size=1,
+        loss=MSE(),
+        accu_echo=False)
     '''
     # data preprocessing
     x, y = load_data('PATH')
@@ -35,5 +46,6 @@ def main():
     model.fit(x_train, y_train, x_valid, y_valid, lr=0.001, epoch=100)
     model.predict(x_test, y_test)
     '''
+
 
 main()

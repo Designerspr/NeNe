@@ -30,9 +30,9 @@ class Layer(object):
         assert isinstance(num, int)
         self.num = num
         if init_seed == 'zero':
-            self.bias = np.zeros(num)
+            self.bias = np.zeros((1,num))
         else:
-            self.bias = np.random.randn(num)
+            self.bias = np.random.randn(1,num)
         return
 
     @property
@@ -79,5 +79,5 @@ class InputLayer(Layer):
         # no bias
         assert isinstance(num, int)
         self.num = num
-        self.bias = np.zeros(num)
+        self.bias = np.zeros((1,num))
         return
