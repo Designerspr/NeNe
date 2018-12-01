@@ -5,15 +5,18 @@ for different uses in regression and classification.
 '''
 import numpy as np
 
+
 class CEL(object):
     '''cross-entropy error should be used only in classification problems.
     Or it may cause errors when calculating log().
     '''
+    delta0 = 10**(-10)
 
     def __init__(self):
         return
+
     @classmethod
-    def get_loss(cls,y_output,y_target,return_accu=True):
+    def get_loss(cls, y_output, y_target, return_accu=True):
         '''Return average CEL.
         
         Arguments:
@@ -25,22 +28,24 @@ class CEL(object):
         Returns:
             [type] -- [description]
         '''
-
-        CEL=-(np.log(y_output)*y_target)
-        ACE=np.sum(CEL/len(y_output))
+        # aviod div 0 error
+        CEL = -(np.log(y_output + cls.delta0) * y_target)
+        ACE = np.sum(CEL / len(y_output))
         if return_accu:
-            match_num=0
-            for (i,sample) in enumerate(y_output):
-                y_predict=(np.max(sample)==sample)
+            match_num = 0
+            for (i, sample) in enumerate(y_output): 
+                y_predict = (np.max(sample) == sample)
                 # if match
-                if np.sum(np.abs((y_predict-y_target[i])))==0:
-                    match_num +=1
-            accu=match_num/len(y_output)
-            return ACE,accu
+                if np.sum(np.abs((y_predict - y_target[i]))) == 0:
+                    match_num += 1
+            accu = match_num / len(y_output)
+            return ACE, accu
         return ACE
+
     @classmethod
-    def get_loss_deriv(cls,y_output,y_target):
-        return y_target/y_output
+    def get_loss_deriv(cls, y_output, y_target):
+        return -1*y_target / (y_output + cls.delta0)
+
 
 class MSE(object):
     '''MSE is usually used in regression.  
@@ -49,8 +54,9 @@ class MSE(object):
 
     def __init__(self):
         return
+
     @classmethod
-    def get_loss(cls,y_output,y_target,return_accu=True):
+    def get_loss(cls, y_output, y_target, return_accu=True):
         '''Return average MSE.
         
         Arguments:
@@ -58,22 +64,20 @@ class MSE(object):
         
         Keyword Arguments:
             return_accu {bool} -- [description] (default: {True})
-        
-        Returns:
-            [type] -- [description]
         '''
 
-        MSE=1/2*np.sum((y_output-y_target)**2)
+        MSE = 1 / 2 * np.sum((y_output - y_target)**2) / len(y_output)
         if return_accu:
-            match_num=0
-            for (i,sample) in enumerate(y_output):
-                y_predict=(np.max(sample)==sample)
+            match_num = 0
+            for (i, sample) in enumerate(y_output):
+                y_predict = (np.max(sample) == sample)
                 # if match
-                if np.sum(np.abs((y_predict-y_target[i])))==0:
-                    match_num +=1
-            accu=match_num/len(y_output)
-            return MSE,accu
+                if np.sum(np.abs((y_predict - y_target[i]))) == 0:
+                    match_num += 1
+            accu = match_num / len(y_output)
+            return MSE, accu
         return MSE
+
     @classmethod
-    def get_loss_deriv(cls,y_output,y_target):
-        return (y_output-y_target)
+    def get_loss_deriv(cls, y_output, y_target):
+        return (y_output - y_target)

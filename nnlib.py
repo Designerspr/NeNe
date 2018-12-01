@@ -70,34 +70,33 @@ def data_shuffle(x, y):
 def main():
     # data preprocessing
     num_input, num_output, num_sample, x, y = load_data(
-        'C:\\Users\\Dell\\Desktop\\BO\\breast-cancer-wisconsin.data')
+        'BO\\breast-cancer-wisconsin.data')
     x = normalization(x)
     x, y = data_shuffle(x, y)
-    print(num_input, num_output, num_sample, x, y)
+    print(num_input, num_output, num_sample)
     x_train, y_train, x_test, y_test = data_split(x, y, split_rate=0.1)
     x_train, y_train, x_valid, y_valid = data_split(x, y, split_rate=0.1)
 
     # model building
     model = NeNe.NeNe()
     model.add(InputLayer(num=num_input))
-    model.add(Layer(num=2048, activation=activation.Tanh(), init_seed='norm'))
-    model.add(Layer(num=2048, activation=activation.Tanh(), init_seed='norm'))
-    model.add(Layer(num=2048, activation=activation.Tanh(), init_seed='norm'))
-    model.add(Layer(num=2048, activation=activation.Tanh(), init_seed='norm'))
+    model.add(Layer(num=5, activation=activation.Tanh(), init_seed='norm'))
+    # model.add(Layer(num=500, activation=activation.Tanh(), init_seed='norm'))
+    # model.add(Layer(num=500, activation=activation.Tanh(), init_seed='norm'))
+    # model.add(Layer(num=500, activation=activation.Tanh(), init_seed='norm'))
     model.add(Layer(num=num_output, activation=activation.SoftMax(), init_seed='norm'))
     model.summary()
     
     model.fit(
         train_data=(x_train, y_train),
         valid_data=(x_valid, y_valid),
-        epoch=200,
-        lrf=LRC(lr=1),
-        batch_size=1,
+        epoch=2,
+        lrf=LRC(lr=0.1),
+        batch_size=3,
         loss=MSE(),
-        accu_echo=False)
-    '''
+       accu_echo=True)
     model.predict(x_test, y_test)
-    '''
+    
 
 
 main()

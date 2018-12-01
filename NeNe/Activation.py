@@ -40,7 +40,7 @@ class Base_Activation(object):
 
     def get_derivative(self, y):
         # Need to be rewrite
-        deri=np.ones(y.shape)
+        deri = np.ones(y.shape)
         return deri
 
 
@@ -61,55 +61,61 @@ class Linear(Base_Activation):
 
     def get_derivative(self, y):
         # Need to be rewrite
-        deri=np.ones(y.shape)
+        deri = np.ones(y.shape)
         return deri
 
+'''
+Activation ReLu Doesot perform well in programming.
+Some Problems are left.
+So this class has been commented.
 
 class ReLu(Base_Activation):
-    '''Pre-defined activation: ReLu  
-    ReLu is an activation perform like this:  
-    f(x) = 0 (when x<=0); x (x>0)
-    ''' 
+    #Pre-defined activation: ReLu  
+    #ReLu is an activation perform like this:  
+    #f(x) = 0 (when x<=0); x (x>0)
+
     def __init__(self):
         return
 
     @property
     def name(self):
-        return 'relu'
+        return 'Relu'
 
     def get_output(self, x):
-        symbol=np.array(x>0,dtype=np.int)
-        return symbol*x
+        symbol = np.array(x > 0, dtype=np.float)
+        return symbol * x
 
     def get_derivative(self, y):
-        symbol=np.array(y>0,dtype=np.int)
+        symbol = np.array(y > 0, dtype=np.float)
         return symbol
-
+'''
 
 class Sigmond(Base_Activation):
     '''Pre-defined activation: Sigmond'''
+
     def __init__(self):
         return
 
     @property
     def name(self):
-        return 'sigmond'
+        return 'Sigmond'
 
     def get_output(self, x):
         return 1 / (1 + np.exp(x))
 
     def get_derivative(self, y):
-        return y*(1 - y)
+        return y * (1 - y)
 
 
 class Tanh(Base_Activation):
     '''Pre-defined activation: Tanh'''
+
     def __init__(self):
         return
 
     @property
     def name(self):
-        return 'tanh'
+        return 'Tanh'
 
     def get_output(self, x):
         return np.tanh(x)
@@ -120,6 +126,7 @@ class Tanh(Base_Activation):
 
 class SoftMax(Base_Activation):
     '''Pre-defined activation: Softmax'''
+
     def __init__(self):
         return
 
@@ -128,9 +135,14 @@ class SoftMax(Base_Activation):
         return 'SoftMax'
 
     def get_output(self, x):
-        x=x-np.max(x)
-        x_softmax=np.exp(x)/np.sum(np.exp(x))
+        x -= np.max(x)
+        x_softmax = np.exp(x) / np.sum(np.exp(x))
         return x_softmax
 
     def get_derivative(self, y):
-        return y*(1-y)
+        return_matrix = np.empty((len(y), len(y)))
+        for i in range(len(y)):
+            for j in range(len(y)):
+                return_matrix[i, j] = -1 * y[i] * y[j]
+            return_matrix[i, i] += y[i]
+        return return_matrix

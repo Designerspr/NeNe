@@ -30,9 +30,9 @@ class Layer(object):
         assert isinstance(num, int)
         self.num = num
         if init_seed == 'zero':
-            self.bias = np.zeros((1,num))
+            self.bias = np.zeros((1, num))
         else:
-            self.bias = np.random.randn(1,num)
+            self.bias = np.random.randn(1, num)
         return
 
     @property
@@ -46,7 +46,8 @@ class Layer(object):
     def forwardPropagation(self, value_input):
         '''forward propagation with this layer only.
         '''
-        value_output = value_input + self.bias
+        value_output = value_input + self.bias[0]
+        # print('forwardPro:',self.bias)
         value_output = self.activation.forward(value_output)
         return value_output
 
@@ -54,9 +55,27 @@ class Layer(object):
         '''backward propagation in this layer, passing values to the last layer.
         '''
         # activation function
-        delta_bias = self.activation.get_derivative(value_output) * err_output
+        if isinstance(self.activation, SoftMax):
+            delta_bias = err_output * self.activation.derivative(value_output)
+            '''
+            for i in range(len(err_output)):
+                delta_bias[i] = err_output[i] * self.activation.derivative(
+                    value_output)[i]
+            print('db0=',delta_bias.shape)
+            '''
+        else:
+            # transform the inner shape of err_output (bug fixed)
+            # this donot happen except use ReLu activation.
+            err_output_=np.empty(err_output.shape)
+            for i in range(len(err_output)):
+                err_output_[i]=err_output[i][0]
+            # print(err_output_[0].shape)
+            delta_bias = self.activation.derivative(value_output)* err_output_
+            # print(err_output_)
+            print('db0=',delta_bias)
         # update bias
-        self.bias = self.bias - delta_bias * lr
+        # average the delta_bias
+        self.bias = self.bias - np.mean(delta_bias, axis=0) * lr
         # pass the value to train the weight and the
         return delta_bias
 
@@ -79,5 +98,5 @@ class InputLayer(Layer):
         # no bias
         assert isinstance(num, int)
         self.num = num
-        self.bias = np.zeros((1,num))
+        self.bias = np.zeros((1, num))
         return

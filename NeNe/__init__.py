@@ -7,7 +7,7 @@ from .Loss import *
 from .LRD import *
 
 import numpy as np
-from progressbar import ProgressBar, Timer, Bar, Percentage
+from progressbar import ProgressBar, Bar, SimpleProgress, FileTransferSpeed
 
 
 class NeNe(object):
@@ -27,11 +27,11 @@ class NeNe(object):
             assert isinstance(add_layer, Layer)
         # add the layer information into the class
         # weight matrix created if it's hidden layer.
-        # default to give the matrix with random values.
+        # default to give the matrix with random values (xavier init).
         self.layer_sequence.append(add_layer)
         if self.net_depth != 0:
             n, m = self.output_num, add_layer.neural_num
-            weight_matrix = np.random.randn(n, m)
+            weight_matrix = np.random.randn(n, m) / np.sqrt(n)
             self.weight_sequence.append(weight_matrix)
         else:
             self.input_num = add_layer.neural_num
@@ -82,11 +82,20 @@ class NeNe(object):
         networkValue = list([output])
         for (layer_index, weight_matrix) in enumerate(self.weight_sequence):
             # layer connection
-            output = np.dot(output, weight_matrix)
+            output_ = np.dot(output, weight_matrix)
+
+            # transform the inner shape of delta_weight (bug fixed)
+            # this will happen when using ReLu activation and np.dot function.
+            output = np.empty(output_.shape)
+            for i in range(len(output_)):
+                output[i] = output_[i][0]
+            # print('forwardCalc=',output[0].shape)
+
             # inner layer
             output = self.layer_sequence[layer_index
                                          + 1].forwardPropagation(output)
             networkValue.append(output)
+        print('net_output:\n',output)
         return output, networkValue
 
     def backwardUpdate(self, y, networkError, lr):
@@ -94,15 +103,23 @@ class NeNe(object):
         d_thislayer = networkError
         for i in reversed(range(1, len(self.layer_sequence))):
             i_1 = i - 1
+            print('layer',i,':\n',d_thislayer)
             # update bias
             d_thislayer = self.layer_sequence[i].backwardPropagation(
                 y[i], d_thislayer, lr=lr)
             # update weight (backup weight first)
-            d_nextlayer = np.dot(d_thislayer,
-                                 np.transpose(self.weight_sequence[i_1]))
+            d_nextlayer = np.matrix(d_thislayer) * np.matrix(
+                np.transpose(self.weight_sequence[i_1]))
+            delta_weight = np.dot(np.transpose(y[i_1]), d_thislayer)
+            '''
+            # transform the inner shape of delta_weight (bug fixed)
+            # this donot happen except use ReLu activation.
+            delta_weight=np.empty(delta_weight_.shape)
+            for i in range(len(delta_weight)):
+                delta_weight[i]=delta_weight_[i][0]
+            '''
             self.weight_sequence[
-                i_1] = self.weight_sequence[i_1] - lr * np.transpose(
-                    y[i_1]) * d_thislayer
+                i_1] = self.weight_sequence[i_1] - lr * delta_weight
             d_thislayer = d_nextlayer
 
     def inputVaildCheck(self, input_data):
@@ -148,27 +165,10 @@ class NeNe(object):
         if not valid_data is None:
             x_valid, y_valid = self.inputVaildCheck(valid_data)
         # train
-        batch_num = len(x_train)
+        batch_num = len(x_train) // batch_size
         generator = data_generator(x_train, y_train, batch_size=batch_size)
-        err, accu = 0, 0
-        if accu_echo:
-            widgets = [
-                'Progress: ',
-                Bar('■'), ' ',
-                Percentage(), ' ',
-                Timer(),
-                ' loss=%.2f' % err,
-                '  accu=%.2f%%' % accu
-            ]
-        else:
-            widgets = [
-                'Progress: ',
-                Bar('■'), ' ',
-                Percentage(), ' ',
-                Timer(),
-                ' loss=%.2f' % err
-            ]
-        pbar = ProgressBar(widgets=widgets, maxval=batch_num)
+        widgets = ['Progress: ', Bar('■'), ' ', SimpleProgress()]
+        pbar = ProgressBar(widgets=widgets, maxval=len(x_train))
 
         for epoch_now in range(1, epoch + 1):
             print('Epoch %d/%d:' % (epoch_now, epoch))
@@ -180,17 +180,16 @@ class NeNe(object):
                 # forward propagation
                 y_output, network = self.forwardCalculation(x_input)
 
-                # calculate error and print
-                if accu_echo:
-                    err, accu = loss.get_loss(
-                        y_output, y_target, return_accu=True)
-                else:
-                    err = loss.get_loss(y_output, y_target, return_accu=False)
-                lr=lrf.update(epoch_now,err)
+                # calculate error
+                err = loss.get_loss(y_output, y_target, return_accu=False)
+                # update learning rate
+                lr = lrf.update(epoch_now, err)
+
                 # update network
                 y_error = loss.get_loss_deriv(y_output, y_target)
                 self.backwardUpdate(network, y_error, lr=lr)
-                pbar.update(value=batch_id+1)
+                pbar.update(
+                    value=np.min(((batch_id + 1) * batch_size, pbar.maxval)))
             pbar.finish()
             # calculate accu,loss on the validation data if needed
             if not valid_data is None:
@@ -198,12 +197,12 @@ class NeNe(object):
                 if accu_echo:
                     loss_this_epoch, accu_this_epoch = loss.get_loss(
                         y_predict, y_valid, return_accu=True)
-                    print('valid_loss=%.4f;valid_accu=%.2f%%' %
-                          (loss_this_epoch, accu_this_epoch))
+                    print('\nvalid_loss=%.4f;valid_accu=%.2f%%' %
+                          (loss_this_epoch, (accu_this_epoch * 100)))
                 else:
                     loss_this_epoch = loss.get_loss(
                         y_predict, y_valid, return_accu=False)
-                    print('valid_loss=%.4f' % (loss_this_epoch))
+                    print('\nvalid_loss=%.4f' % (loss_this_epoch))
 
     def predict(self, x_test, y_test=None, loss=None):
         '''use to predict data or estimate the accurary.
