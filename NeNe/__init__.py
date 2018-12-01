@@ -7,7 +7,7 @@ from .Loss import *
 from .LRD import *
 
 import numpy as np
-from progressbar import ProgressBar, Timer, Bar, Percentage
+from progressbar import ProgressBar, Bar, SimpleProgress
 
 
 class NeNe(object):
@@ -27,11 +27,11 @@ class NeNe(object):
             assert isinstance(add_layer, Layer)
         # add the layer information into the class
         # weight matrix created if it's hidden layer.
-        # default to give the matrix with random values.
+        # default to give the matrix with random values (xavier init).
         self.layer_sequence.append(add_layer)
         if self.net_depth != 0:
             n, m = self.output_num, add_layer.neural_num
-            weight_matrix = np.random.randn(n, m)
+            weight_matrix = np.random.randn(n, m) / np.sqrt(n)
             self.weight_sequence.append(weight_matrix)
         else:
             self.input_num = add_layer.neural_num
@@ -101,8 +101,8 @@ class NeNe(object):
             d_nextlayer = np.dot(d_thislayer,
                                  np.transpose(self.weight_sequence[i_1]))
             self.weight_sequence[
-                i_1] = self.weight_sequence[i_1] - lr * np.transpose(
-                    y[i_1]) * d_thislayer
+                i_1] = self.weight_sequence[i_1] - lr * np.dot(
+                    np.transpose(y[i_1]), d_thislayer)
             d_thislayer = d_nextlayer
 
     def inputVaildCheck(self, input_data):
@@ -148,31 +148,15 @@ class NeNe(object):
         if not valid_data is None:
             x_valid, y_valid = self.inputVaildCheck(valid_data)
         # train
-        batch_num = len(x_train)
+        batch_num = len(x_train) // batch_size
         generator = data_generator(x_train, y_train, batch_size=batch_size)
-        err, accu = 0, 0
-        if accu_echo:
-            widgets = [
-                'Progress: ',
-                Bar('■'), ' ',
-                Percentage(), ' ',
-                Timer(),
-                ' loss=%.2f' % err,
-                '  accu=%.2f%%' % accu
-            ]
-        else:
-            widgets = [
-                'Progress: ',
-                Bar('■'), ' ',
-                Percentage(), ' ',
-                Timer(),
-                ' loss=%.2f' % err
-            ]
-        pbar = ProgressBar(widgets=widgets, maxval=batch_num)
-
+        widgets = ['Progress: ', Bar('■'), ' ', SimpleProgress()]
+        pbar = ProgressBar(widgets=widgets, maxval=len(x_train))
+        lr = lrf.lr
         for epoch_now in range(1, epoch + 1):
             print('Epoch %d/%d:' % (epoch_now, epoch))
             pbar.start()
+            err_this, accu_this = 0, 0
             # train every batch
             for batch_id in range(batch_num):
                 x_input, y_target = generator.__next__()
@@ -181,31 +165,44 @@ class NeNe(object):
                 y_output, network = self.forwardCalculation(x_input)
 
                 # calculate error and print
-                if accu_echo:
-                    err, accu = loss.get_loss(
-                        y_output, y_target, return_accu=True)
-                else:
-                    err = loss.get_loss(y_output, y_target, return_accu=False)
-                lr=lrf.update(epoch_now,err)
+                err, accu = loss.get_loss(y_output, y_target, return_accu=True)
+                err_this += err * len(y_output)
+                accu_this += accu * len(y_output)
+
                 # update network
                 y_error = loss.get_loss_deriv(y_output, y_target)
                 self.backwardUpdate(network, y_error, lr=lr)
-                pbar.update(value=batch_id+1)
+                pbar.update(
+                    value=np.min(((batch_id + 1) * batch_size, pbar.maxval)))
+
             pbar.finish()
+            err_this, accu_this = err_this / len(x_train), accu_this / len(
+                x_train)
             # calculate accu,loss on the validation data if needed
             if not valid_data is None:
                 y_predict = self.predict(x_valid)
                 if accu_echo:
                     loss_this_epoch, accu_this_epoch = loss.get_loss(
                         y_predict, y_valid, return_accu=True)
-                    print('valid_loss=%.4f;valid_accu=%.2f%%' %
-                          (loss_this_epoch, accu_this_epoch))
+                    print(
+                        '\nloss=%.4f;accu=%.2f%%;valid_loss=%.4f;valid_accu=%.2f%%'
+                        % (err_this, accu_this * 100, loss_this_epoch,
+                           accu_this_epoch * 100))
                 else:
                     loss_this_epoch = loss.get_loss(
                         y_predict, y_valid, return_accu=False)
-                    print('valid_loss=%.4f' % (loss_this_epoch))
+                    print('\nloss=%.4f;valid_loss=%.4f' % (err_this,
+                                                           loss_this_epoch))
+            else:
+                if accu_echo:
+                    print('\nloss=%.4f;accu=%.2f%%' % (err_this,
+                                                       accu_this * 100))
+                else:
+                    print('\nloss=%.4f' % (err_this))
+            # update lr
+            lr = lrf.update(epoch_now, err_this)
 
-    def predict(self, x_test, y_test=None, loss=None):
+    def predict(self, x_test, y_test=None, loss=None, get_accu=True):
         '''use to predict data or estimate the accurary.
         Arguments:
             x_test {ndarray}
@@ -219,8 +216,11 @@ class NeNe(object):
             assert len(x_test) == len(y_test)
             if loss is None:
                 loss = MSE()
-            err = loss.get_loss(y_predict, y_test, return_accu=False)
-            return err
+            err, accu = loss.get_loss(y_predict, y_test, return_accu=True)
+            if get_accu:
+                return err, accu
+            else:
+                return err
 
 
 def data_generator(x, y, batch_size=1):

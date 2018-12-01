@@ -65,27 +65,6 @@ class Linear(Base_Activation):
         return deri
 
 
-class ReLu(Base_Activation):
-    '''Pre-defined activation: ReLu  
-    ReLu is an activation perform like this:  
-    f(x) = 0 (when x<=0); x (x>0)
-    ''' 
-    def __init__(self):
-        return
-
-    @property
-    def name(self):
-        return 'relu'
-
-    def get_output(self, x):
-        symbol=np.array(x>0,dtype=np.int)
-        return symbol*x
-
-    def get_derivative(self, y):
-        symbol=np.array(y>0,dtype=np.int)
-        return symbol
-
-
 class Sigmond(Base_Activation):
     '''Pre-defined activation: Sigmond'''
     def __init__(self):
@@ -133,4 +112,9 @@ class SoftMax(Base_Activation):
         return x_softmax
 
     def get_derivative(self, y):
-        return y*(1-y)
+        return_matrix = np.empty((len(y), len(y)))
+        for i in range(len(y)):
+            for j in range(len(y)):
+                return_matrix[i, j] = -1 * y[i] * y[j]
+            return_matrix[i, i] += y[i]
+        return return_matrix

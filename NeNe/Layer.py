@@ -54,9 +54,9 @@ class Layer(object):
         '''backward propagation in this layer, passing values to the last layer.
         '''
         # activation function
-        delta_bias = self.activation.get_derivative(value_output) * err_output
+        delta_bias = err_output * self.activation.derivative(value_output)
         # update bias
-        self.bias = self.bias - delta_bias * lr
+        self.bias = self.bias - np.mean(delta_bias, axis=0) * lr
         # pass the value to train the weight and the
         return delta_bias
 
